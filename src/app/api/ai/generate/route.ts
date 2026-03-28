@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       project_blueprint,
       story_analysis,
       existing_episodes,
+      product_asset_details,
     } = await req.json();
     const targetLanguage = language || 'zh';
 
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     const jsonMode = true;
 
     if (type === 'story_blueprint') {
-      prompt = getProjectBlueprintPrompt(theme, targetLanguage, episode_count);
+      prompt = getProjectBlueprintPrompt(theme, targetLanguage, episode_count, typeof product_asset_details === 'string' ? product_asset_details : '');
     } else if (type === 'story_batch') {
       prompt = getStoryBatchPrompt(
         theme,

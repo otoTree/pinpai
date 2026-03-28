@@ -46,6 +46,17 @@ type BlueprintAssets = {
   items?: Array<BlueprintAssetItem & { type?: AssetType | string }>;
 };
 
+const getSeriesPlanProductAssetDetails = (seriesPlan: unknown) => {
+  if (!seriesPlan || typeof seriesPlan !== 'object') return '';
+  const record = seriesPlan as Record<string, unknown>;
+  const projectBlueprint = record.project_blueprint;
+  if (!projectBlueprint || typeof projectBlueprint !== 'object') return '';
+  const blueprintRecord = projectBlueprint as Record<string, unknown>;
+  return typeof blueprintRecord.product_asset_details === 'string'
+    ? blueprintRecord.product_asset_details
+    : '';
+};
+
 export function ScriptEditor({ projectId }: { projectId: string }) {
   const [status, setStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -55,6 +66,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
   const [scriptGenerationFailed, setScriptGenerationFailed] = useState(0);
   const [ideaDialogOpen, setIdeaDialogOpen] = useState(false);
   const [idea, setIdea] = useState('');
+  const [productAssetDetails, setProductAssetDetails] = useState('');
   const [episodeCount, setEpisodeCount] = useState('52');
   const [generationStage, setGenerationStage] = useState<'idle' | 'blueprint' | 'episodes' | 'saving'>('idle');
   const [currentBatch, setCurrentBatch] = useState(0);
@@ -68,6 +80,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
   useEffect(() => {
     if (ideaDialogOpen && project) {
       setIdea(project.logline || '');
+      setProductAssetDetails(getSeriesPlanProductAssetDetails(project.seriesPlan));
     }
   }, [ideaDialogOpen, project]);
 
@@ -250,6 +263,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
     if (!idea.trim()) return;
     const parsedEpisodeCount = Number.parseInt(episodeCount, 10);
     const safeEpisodeCount = Number.isFinite(parsedEpisodeCount) ? Math.max(10, Math.min(120, parsedEpisodeCount)) : 52;
+    const normalizedProductAssetDetails = productAssetDetails.trim();
     const batchSize = 8;
     const computedTotalBatches = Math.ceil(safeEpisodeCount / batchSize);
     setIsGenerating(true);
@@ -264,7 +278,8 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
             type: 'story_blueprint', 
             theme: idea,
             language: project?.language || 'zh',
-            episode_count: safeEpisodeCount
+            episode_count: safeEpisodeCount,
+            product_asset_details: normalizedProductAssetDetails,
         }),
       });
       
@@ -272,7 +287,11 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
       
       const blueprintData = await blueprintResponse.json();
       const assets = (blueprintData.assets || {}) as BlueprintAssets;
-      const projectLogline = blueprintData.project_blueprint?.logline || blueprintData.project_blueprint?.full_synopsis;
+      const enrichedProjectBlueprint = {
+        ...(blueprintData.project_blueprint || {}),
+        product_asset_details: blueprintData.project_blueprint?.product_asset_details || normalizedProductAssetDetails,
+      };
+      const projectLogline = enrichedProjectBlueprint.logline || enrichedProjectBlueprint.full_synopsis;
 
       const allEpisodes: SeriesOutlineItem[] = [];
       setGenerationStage('episodes');
@@ -290,7 +309,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
             episode_count: safeEpisodeCount,
             start_episode: start,
             end_episode: end,
-            project_blueprint: blueprintData.project_blueprint || {},
+            project_blueprint: enrichedProjectBlueprint,
             story_analysis: blueprintData.story_analysis || {},
             existing_episodes: allEpisodes.slice(-6),
           }),
@@ -333,7 +352,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
       }
       const outline = Array.from(dedupedMap.values()).sort((a, b) => a.episode_number - b.episode_number);
       const seriesData = {
-        project_blueprint: blueprintData.project_blueprint || {},
+        project_blueprint: enrichedProjectBlueprint,
         story_analysis: blueprintData.story_analysis || {},
         assets,
         series_outline: outline,
@@ -422,6 +441,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
 
       setIdeaDialogOpen(false);
       setIdea('');
+      setProductAssetDetails('');
       
     } catch (error) {
       console.error(error);
@@ -473,7 +493,6 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
     setScriptGenerationFailed(0);
 
     let failedCount = 0;
-    let nextEpisodes = episodes;
 
     try {
       let completedCount = 0;
@@ -635,6 +654,16 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
                                 placeholder="例如：一个赛博朋克风格的侦探故事..."
                                 className="min-h-[100px]"
                             />
+                            <div>
+                                <Label htmlFor="productAssetDetails" className="mb-2 block">产品资产详细信息</Label>
+                                <Textarea
+                                  id="productAssetDetails"
+                                  value={productAssetDetails}
+                                  onChange={(e) => setProductAssetDetails(e.target.value)}
+                                  placeholder="例如：产品名称、外观形态、核心卖点、使用场景、目标人群、禁忌点、必须出现的镜头/动作"
+                                  className="min-h-[120px]"
+                                />
+                            </div>
                             <div>
                                 <Label htmlFor="episodeCount" className="mb-2 block">目标集数（10-120）</Label>
                                 <Input

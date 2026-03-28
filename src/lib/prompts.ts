@@ -42,20 +42,46 @@ Key Principles:
    - **Subjects**: Use names and mannerisms appropriate for the target language/culture.
    - **Setting**: Set the story in a context appropriate for the target language/culture.
    - **Style**: Dialogue and visuals should align with film/TikTok trends in the target region.
-   - If the output language is Chinese, use “主体” instead of “角色” when referring to generic on-screen people/entities in instructions or descriptions.
+8. **Infomercial Short Drama Rule**: For feed-style short drama ads, every episode must include a concrete product appearance, usage, comparison, delivery, mention, or consequence tied to the product. Never let an episode feel like a generic story with the product missing.
+9. **Chinese Naming Rule**: If the output language is Chinese, use “主体” instead of “角色” when referring to generic on-screen people/entities in instructions or descriptions.
 `;
 };
 
-export const getProjectBlueprintPrompt = (theme: string, language: string = 'zh', episodeCount: number = 10) => {
+const extractProductAssetDetails = (input: unknown): string => {
+  if (!input || typeof input !== 'object') return '';
+  const record = input as Record<string, unknown>;
+  if (typeof record.product_asset_details === 'string') {
+    return record.product_asset_details.trim();
+  }
+  const projectBlueprint = record.project_blueprint;
+  if (projectBlueprint && typeof projectBlueprint === 'object') {
+    const blueprintRecord = projectBlueprint as Record<string, unknown>;
+    if (typeof blueprintRecord.product_asset_details === 'string') {
+      return blueprintRecord.product_asset_details.trim();
+    }
+  }
+  return '';
+};
+
+export const getProjectBlueprintPrompt = (
+  theme: string,
+  language: string = 'zh',
+  episodeCount: number = 10,
+  productAssetDetails: string = ''
+) => {
   const isEnglish = language === 'en';
   const safeEpisodeCount = Math.max(10, Math.min(120, Math.floor(episodeCount || 10)));
+  const normalizedProductAssetDetails = productAssetDetails.trim();
   return `
 Task: Create a consistent branded short drama project blueprint based on the user's theme.
 Theme: ${theme}
 Target episode count: ${safeEpisodeCount}
+Product Asset Details: ${normalizedProductAssetDetails || (isEnglish ? 'Not provided. Infer a concrete product brief from the theme and branded context.' : '未提供。请根据主题和商业广告语境补全一个具体产品设定。')}
 
 Requirements:
 1. **Aesthetic & Brand Fit**: The story world MUST feel suitable for branded short drama storytelling, with natural room for product, service, or brand value to appear inside the episode conflicts or resolutions.
+   - The product brief must be concrete and production-usable, not abstract.
+   - If Product Asset Details are provided, preserve the product category, appearance, usage scenario, selling points, target user, and taboo points as hard constraints.
 2. **Language**: The output MUST be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
 3. **Structure Methodology**:
    - Every episode must be designed as a self-contained 90+ second story with a complete mini-arc.
@@ -71,14 +97,18 @@ Requirements:
 5. **Output Scope**:
    - Do NOT output any episode list in this step.
    - Only output project_blueprint, story_analysis, and assets.
-6. **Quality**: High-retention branded storytelling with clear escalation, emotional payoff, and natural commercial relevance.
+6. **Product Coverage**:
+   - This is a feed-style short drama ad, so the product MUST be able to appear in every episode, not only in selected episodes.
+   - Design the story engine so each episode can visibly involve the product in action, conflict, decision, evidence, gift, rescue, misunderstanding, comparison, or payoff.
+7. **Quality**: High-retention branded storytelling with clear escalation, emotional payoff, and natural commercial relevance.
 
 Output Format: JSON
 {
   "project_blueprint": {
     "title": "...",
     "logline": "...",
-    "full_synopsis": "..."
+    "full_synopsis": "...",
+    "product_asset_details": "..."
   },
   "story_analysis": {
     "core_conflict": "...",
@@ -111,6 +141,7 @@ export const getStoryBatchPrompt = (
   const safeEpisodeCount = Math.max(10, Math.min(120, Math.floor(episodeCount || 10)));
   const safeStart = Math.max(1, Math.floor(startEpisode || 1));
   const safeEnd = Math.min(safeEpisodeCount, Math.max(safeStart, Math.floor(endEpisode || safeStart)));
+  const productAssetDetails = extractProductAssetDetails(projectBlueprint);
   return `
 Task: Generate episode outlines in a batch range for a branded short drama series.
 
@@ -118,6 +149,7 @@ Theme: ${theme}
 Language: ${language}
 Total episodes: ${safeEpisodeCount}
 Current batch range: Episode ${safeStart} to Episode ${safeEnd}
+Product Asset Details: ${productAssetDetails || (isEnglish ? 'Use the product clues inside the blueprint/theme and make the product present in every episode.' : '请结合蓝图或主题中的产品线索，确保每集都有产品露出。')}
 
 Project Blueprint:
 ${JSON.stringify(projectBlueprint)}
@@ -143,9 +175,14 @@ Requirements:
    - Every episode MUST tell one self-contained brand short drama story with setup, conflict, reversal, and resolution.
    - The audience MUST be able to understand the episode without depending on previous episodes.
    - The brand/product/value point must be naturally embedded in the situation, not pasted in as ad copy.
-6. **Retention**: Each episode must contain at least one clear hook and one memorable ending beat.
-7. **Ending Rule**: The \`cliffhanger\` field should create emotional aftertaste, curiosity, or a forward-looking hook, but the episode's main story itself must already be complete.
-8. **Escalation**: Stakes should escalate across the project while keeping each episode independently satisfying.
+6. **Mandatory Product Presence (HARD CONSTRAINT)**:
+   - Every single episode in this batch MUST contain the product.
+   - The \`summary\` MUST explicitly show how the product enters the episode's conflict, decision, evidence, emotional turning point, or resolution.
+   - The \`hook\` or \`cliffhanger\` MUST keep the product commercially relevant instead of letting it disappear.
+   - If Product Asset Details are provided, use them as a hard brief and do not replace the product with a generic placeholder.
+7. **Retention**: Each episode must contain at least one clear hook and one memorable ending beat.
+8. **Ending Rule**: The \`cliffhanger\` field should create emotional aftertaste, curiosity, or a forward-looking hook, but the episode's main story itself must already be complete.
+9. **Escalation**: Stakes should escalate across the project while keeping each episode independently satisfying.
 
 Output Format: JSON
 {
@@ -192,11 +229,13 @@ export const getEpisodeContentPrompt = (
     : [];
   const allowedCharacters = normalizedAssets.filter((asset) => asset.type === 'character');
   const allowedLocations = normalizedAssets.filter((asset) => asset.type === 'location');
+  const productAssetDetails = extractProductAssetDetails(seriesPlan);
   return `
 Task: Write the detailed script for **Episode ${episodeNum}** as a branded short drama episode.
 Context:
 - Series Plan: ${JSON.stringify(seriesPlan)}
 - Episode Summary: ${summary}
+- Product Asset Details: ${productAssetDetails || (isEnglish ? 'Infer from the series plan, but the product must still appear in this episode.' : '请从系列规划中推断，但本集仍必须出现产品。')}
 - Allowed Subjects (stored as character assets): ${JSON.stringify(allowedCharacters)}
 - Allowed Locations: ${JSON.stringify(allowedLocations)}
 
@@ -208,6 +247,9 @@ Requirements:
 5. **Content Quality (CRITICAL)**:
    - **Visual Storytelling**: Use "Show, Don't Tell". Describe actions, expressions, and camera angles.
    - **Brand Short Drama Logic**: The episode must revolve around one concrete scenario/problem, one key turning point, and one clear resolution that naturally reveals the brand value or emotional takeaway.
+   - **Mandatory Product Presence**: This is a feed-style short drama ad, so the product MUST appear in this episode in a concrete, visible, and plot-relevant way. The product cannot stay off-screen or exist only as a vague concept.
+   - At least one dialogue/action beat must directly involve product appearance, usage, delivery, comparison, proof, gifting, testing, recommendation, or consequence.
+   - If Product Asset Details are provided, keep the product traits, selling points, usage scenario, and restrictions aligned with that brief.
    - **TikTok Pacing**:
      - **0-3s**: Visual hook / shocking moment.
      - **3-15s**: Immediate conflict expansion.
@@ -348,6 +390,9 @@ export const getStoryboardGenerationPrompt = (scriptContent: string, existingAss
 4. **Flexible Duration (4s-6s)**: Each shot should typically last between 4s to 6s. It must capture a specific action, reaction, or dialogue beat.
 5. **Mandatory Visual Continuity**: Shot transitions MUST have clear visual logic (e.g., eyeline match, action continuity, reaction shot). No illogical hard cuts.
 6. **Asset Coverage & Matching**: Each shot MUST list all involved **subjects and locations**. If an asset exists in the provided list, use its exact name (case-insensitive match). **CRITICAL: EVERY single shot MUST have at least one explicit scene/location assigned to it in \`sceneLabel\` and \`suggestedAssets.locations\`. Even for close-ups or continuous action, you MUST explicitly state the scene/location. Never leave the scene empty.**
+   - The product is NOT provided as a separate asset category. Products and characters are unified in the same subject library.
+   - You MUST identify the product subject by reading both the script and the provided subject assets, then reuse that exact subject name when the product appears in a shot.
+   - If a subject asset is clearly the product, include it in \`characters\`, \`suggestedAssetNames\`, and \`suggestedAssets.characters\` just like any other subject.
 7. **Opening Highlight Shot**: Shot \`sequence: 1\` MUST be the current episode's highlight moment: the single most emotionally explosive, visually striking, brand-relevant, or plot-defining shot from this episode. It must function as a cold open teaser, not a generic establishing shot.
 8. **One Episode, One Story**: The storyboard MUST clearly visualize one complete story arc within this episode: setup, problem, turning point, and resolution, all landing within 90+ seconds.
 
@@ -385,12 +430,13 @@ Analyze the provided script and generate a storyboard sequence.
 4. **First Shot Priority**: The very first shot must be the episode highlight shot with the highest dramatic value, strongest emotion, or biggest suspense payoff in the current script. Start with impact. Only after that may you unfold the rest of the episode beats.
 5. **Temporal Clarity After Teaser**: If shot 1 is a cold open from a later peak moment, shot 2 or the following shots MUST clearly signal the rewind or time shift in \`transition.timeGap\` and \`timeline\` so the sequence still reads coherently.
 6. **Brand Short Drama Arc**: The shot sequence MUST make the brand-related scenario, problem escalation, key turning point, and final resolution visually legible without requiring external explanation.
-7. **Chinese Naming Rule**: If the output language is Chinese and you need a generic label for a person/entity in descriptions, use “主体” instead of “角色”.
+7. **Product Subject Discovery Rule**: Do not wait for a dedicated product field. You must discover the product subject from the script and the existing subject library yourself. Whenever the script shows the product appearing, being held, used, delivered, compared, displayed, or emotionally highlighted, bind that shot to the matching subject asset name from the library.
+8. **Chinese Naming Rule**: If the output language is Chinese and you need a generic label for a person/entity in descriptions, use “主体” instead of “角色”.
 
 **Script Content**:
 ${scriptContent.slice(0, 15000)}...
 
-**Existing Assets Context** (Try to reuse these if applicable, match by name):
+**Existing Assets Context** (This is the unified subject/location library. Reuse exact names whenever applicable. Product subjects are also inside this library, not a separate product list):
 ${JSON.stringify(existingAssets.map(a => ({ id: a.id, name: a.name, type: a.type })))}
 
 **Scene Art Style**: ${resolvedSceneStyle}
