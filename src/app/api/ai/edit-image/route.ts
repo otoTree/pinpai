@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { AIAPIError, callAIChatCompletion, extractFirstMessageContent, extractImageUrls } from '@/lib/ai-server';
+import { AIAPIError, callAIChatCompletion, extractFirstMessageContent, extractImageUrls, getAIAPIConfig } from '@/lib/ai-server';
 import { put } from '@vercel/blob';
 
 export const maxDuration = 300;
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
 
     const result = await callAIChatCompletion({
       messages,
+      config: getAIAPIConfig(),
       extraPayload: { model: 'gemini-3-pro-image-preview', n }
     });
 
