@@ -176,13 +176,17 @@ export function AssetDialog({
     try {
       const fullPrompt = getImageGenerationPrompt(formData.visualPrompt, assetType, artStyle);
       const aspectRatio = assetType === 'character' ? '16:9' : '16:9';
-      
-      const response = await fetch('/api/ai/generate-image', {
+      const currentImageUrl = formData.imageUrl?.trim();
+      const isImageToImage = Boolean(currentImageUrl);
+
+      const response = await fetch(isImageToImage ? '/api/ai/edit-image' : '/api/ai/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             prompt: fullPrompt,
-            aspectRatio 
+            aspectRatio,
+            upload: true,
+            ...(isImageToImage ? { imageUrl: currentImageUrl } : {})
         }),
       });
       
@@ -271,7 +275,7 @@ export function AssetDialog({
                             disabled={isGenerating || isUploading || !formData.visualPrompt}
                         >
                             {isGenerating ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Wand2 className="w-3 h-3 mr-1" />}
-                            生成图片
+                            {formData.imageUrl ? '图生图优化' : '生成图片'}
                         </Button>
                     </div>
                     <Textarea
@@ -285,6 +289,11 @@ export function AssetDialog({
                         {assetType === 'character' && '自动添加：三视图、白背景等主体设定约束'}
                         {assetType === 'location' && '自动添加：无人场景、环境光等约束'}
                     </p>
+                    {formData.imageUrl && (
+                        <p className="text-[10px] text-muted-foreground">
+                            检测到当前图片，点击按钮会基于这张图进行优化。
+                        </p>
+                    )}
                 </div>
             </div>
 

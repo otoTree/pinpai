@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Plus, User, MapPin, Box, Wand2, Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, User, MapPin, Wand2, Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { ArtStyleConfig, Asset, AssetType, Project } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 import { AssetDialog } from './AssetDialog';
@@ -63,6 +63,10 @@ export function AssetGallery({ projectId }: { projectId: string }) {
   const typeMap: Record<string, string> = {
     character: '主体',
     location: '场景',
+  };
+
+  const getErrorMessage = (error: unknown) => {
+    return error instanceof Error ? error.message : '未知错误';
   };
 
   const handleOpenCreate = () => {
@@ -232,8 +236,47 @@ export function AssetGallery({ projectId }: { projectId: string }) {
       }
   };
 
+  const generateAssetImage = async (asset: Asset) => {
+    const fullPrompt = getImageGenerationPrompt(asset.visualPrompt, asset.type, artStyleConfig);
+    const aspectRatio = asset.type === 'character' ? '16:9' : '16:9';
+    const currentImageUrl = asset.imageUrl?.trim();
+    const isImageToImage = Boolean(currentImageUrl);
+
+    const response = await fetch(isImageToImage ? '/api/ai/edit-image' : '/api/ai/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            prompt: fullPrompt,
+            aspectRatio,
+            upload: true,
+            ...(isImageToImage ? { imageUrl: currentImageUrl } : {})
+        }),
+    });
+
+    if (!response.ok) {
+        let errorMsg = `请求失败 (状态码: ${response.status})`;
+        try {
+            const errData = await response.json();
+            if (errData.error) errorMsg = errData.error;
+            if (errData.details) errorMsg += ` - ${errData.details}`;
+        } catch {
+        }
+        throw new Error(errorMsg);
+    }
+
+    const data = await response.json();
+
+    if (data.data && data.data[0]?.url) {
+        await api.assets.update(asset.id, { imageUrl: data.data[0].url });
+        setAssets(prev => prev.map(a => a.id === asset.id ? { ...a, imageUrl: data.data[0].url } : a));
+        return;
+    }
+
+    throw new Error(data.error || '生成失败，未返回图片链接');
+  };
+
   const handleGenerateImage = async (e: React.MouseEvent, asset: Asset) => {
-    e.stopPropagation(); // Prevent opening edit dialog
+    e.stopPropagation();
     if (!asset.visualPrompt) {
         alert('该资产没有视觉提示词 (Visual Prompt)，请先编辑添加。');
         return;
@@ -241,41 +284,10 @@ export function AssetGallery({ projectId }: { projectId: string }) {
 
     setGeneratingAssets(prev => new Set(prev).add(asset.id));
     try {
-        const fullPrompt = getImageGenerationPrompt(asset.visualPrompt, asset.type, artStyleConfig);
-        const aspectRatio = asset.type === 'character' ? '16:9' : '16:9';
-        
-        const response = await fetch('/api/ai/generate-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt: fullPrompt,
-                aspectRatio
-            }),
-        });
-        
-        if (!response.ok) {
-            let errorMsg = `请求失败 (状态码: ${response.status})`;
-            try {
-                const errData = await response.json();
-                if (errData.error) errorMsg = errData.error;
-                if (errData.details) errorMsg += ` - ${errData.details}`;
-            } catch (e) {
-                // ignore json parse error
-            }
-            throw new Error(errorMsg);
-        }
-
-        const data = await response.json();
-
-        if (data.data && data.data[0]?.url) {
-            await api.assets.update(asset.id, { imageUrl: data.data[0].url });
-            setAssets(prev => prev.map(a => a.id === asset.id ? { ...a, imageUrl: data.data[0].url } : a));
-        } else {
-            throw new Error(data.error || '生成失败，未返回图片链接');
-        }
-    } catch (error: any) {
+        await generateAssetImage(asset);
+    } catch (error: unknown) {
         console.error('Generation error:', error);
-        alert(`生成图片失败: ${error.message || '未知错误'}`);
+        alert(`生成图片失败: ${getErrorMessage(error)}`);
     } finally {
         setGeneratingAssets(prev => {
             const next = new Set(prev);
@@ -305,41 +317,9 @@ export function AssetGallery({ projectId }: { projectId: string }) {
     const generateOne = async (asset: Asset) => {
         setGeneratingAssets(prev => new Set(prev).add(asset.id));
         try {
-            const fullPrompt = getImageGenerationPrompt(asset.visualPrompt, asset.type, artStyleConfig);
-            const aspectRatio = asset.type === 'character' ? '16:9' : '16:9';
-
-            const response = await fetch('/api/ai/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt: fullPrompt,
-                    aspectRatio
-                }),
-            });
-            
-            if (!response.ok) {
-                let errorMsg = `请求失败 (状态码: ${response.status})`;
-                try {
-                    const errData = await response.json();
-                    if (errData.error) errorMsg = errData.error;
-                    if (errData.details) errorMsg += ` - ${errData.details}`;
-                } catch (e) {
-                    // ignore json parse error
-                }
-                throw new Error(errorMsg);
-            }
-
-            const data = await response.json();
-
-            if (data.data && data.data[0]?.url) {
-                await api.assets.update(asset.id, { imageUrl: data.data[0].url });
-                setAssets(prev => prev.map(a => a.id === asset.id ? { ...a, imageUrl: data.data[0].url } : a));
-            } else {
-                throw new Error(data.error || '生成失败，未返回图片链接');
-            }
-        } catch (error: any) {
+            await generateAssetImage(asset);
+        } catch (error: unknown) {
             console.error(`Batch generation error for ${asset.name}:`, error);
-            // Don't alert here to avoid spamming the user, but we could collect errors.
         } finally {
             completed++;
             setBatchProgress(completed);
@@ -478,7 +458,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
                                         ) : (
                                             <Sparkles className="w-4 h-4 mr-2" />
                                         )}
-                                        {generatingAssets.has(asset.id) ? '生成中...' : (asset.imageUrl ? '重新生成' : '生成图片')}
+                                        {generatingAssets.has(asset.id) ? '生成中...' : (asset.imageUrl ? '图生图优化' : '生成图片')}
                                     </Button>
                                 </div>
                             )}
