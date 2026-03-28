@@ -315,7 +315,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
             summary: ep.summary || '',
             hook: ep.hook || '',
             cliffhanger: ep.cliffhanger || '',
-            duration_seconds: ep.duration_seconds || 60,
+            duration_seconds: ep.duration_seconds || 90,
           });
         }
       });
@@ -327,7 +327,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
             summary: project?.language === 'en' ? 'To be generated' : '待生成',
             hook: project?.language === 'en' ? 'Pending hook' : '待补充钩子',
             cliffhanger: project?.language === 'en' ? 'Pending cliffhanger' : '待补充悬念',
-            duration_seconds: 60,
+            duration_seconds: 90,
           });
         }
       }
@@ -622,7 +622,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
                         <DialogHeader>
                             <DialogTitle>从灵感生成剧本</DialogTitle>
                             <DialogDescription>
-                                输入故事主题或灵感，生成完整项目设计（角色、场景、道具与 50+ 集大纲）。
+                                输入故事主题或灵感，生成完整项目设计（主体、场景、道具与分集大纲）。
                                 这将覆盖当前剧集与资产。
                             </DialogDescription>
                         </DialogHeader>

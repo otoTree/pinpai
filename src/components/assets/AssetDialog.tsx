@@ -45,7 +45,7 @@ export function AssetDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const typeMap: Record<string, string> = {
-    character: '角色',
+    character: '主体',
     location: '场景',
   };
 
@@ -244,7 +244,7 @@ export function AssetDialog({
                       onChange={(e) => setFormData({ ...formData, isMain: e.target.checked })}
                       className="w-4 h-4 rounded border-gray-300"
                     />
-                    <Label htmlFor="isMain" className="cursor-pointer">核心主角 (用于封面生成)</Label>
+                    <Label htmlFor="isMain" className="cursor-pointer">核心主体 (用于封面生成)</Label>
                   </div>
                 )}
                 
@@ -282,7 +282,7 @@ export function AssetDialog({
                     className="h-24 resize-none font-mono text-sm"
                     />
                     <p className="text-[10px] text-muted-foreground">
-                        {assetType === 'character' && '自动添加：三视图、白背景等约束'}
+                        {assetType === 'character' && '自动添加：三视图、白背景等主体设定约束'}
                         {assetType === 'location' && '自动添加：无人场景、环境光等约束'}
                     </p>
                 </div>

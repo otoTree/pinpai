@@ -137,7 +137,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-serif">{totalAssets}</div>
-            <p className="text-xs text-black/40 mt-1">{characters} 个角色 · {locations} 个场景</p>
+            <p className="text-xs text-black/40 mt-1">{characters} 个主体 · {locations} 个场景</p>
           </CardContent>
         </Card>
 
@@ -214,7 +214,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
               <div className="text-sm text-black/80 font-medium">{project.artStyle || '未设置'}</div>
             </div>
             <div>
-              <span className="text-xs text-black/50 block mb-1">角色美术偏好</span>
+              <span className="text-xs text-black/50 block mb-1">主体美术偏好</span>
               <div className="text-sm text-black/80">{project.characterArtStyle || '默认'}</div>
             </div>
             <div>

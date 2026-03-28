@@ -213,7 +213,7 @@ export function ProjectDialog({ children, project, open: controlledOpen, onOpenC
                     id="ideaInput"
                     value={ideaInput}
                     onChange={(e) => setIdeaInput(e.target.value)}
-                    placeholder="输入一段简单的想法、小说片段或新闻，AI 将自动提取剧名、梗概与人物/场景美术..."
+                    placeholder="输入一段品牌主题、营销场景、小说片段或新闻，AI 将自动提取剧名、梗概与主体/场景美术..."
                     className="flex-1 h-16 text-xs resize-none bg-white"
                   />
                   <Button
@@ -265,14 +265,14 @@ export function ProjectDialog({ children, project, open: controlledOpen, onOpenC
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="characterArtStyle" className="text-right">
-                人物美术
+                主体美术
               </Label>
               <Input
                 id="characterArtStyle"
                 value={characterArtStyle}
                 onChange={(e) => setCharacterArtStyle(e.target.value)}
                 className="col-span-3"
-                placeholder="例如：水墨人物、赛博朋克角色、皮克斯风..."
+                placeholder="例如：高端品牌质感主体、都市电影感主体、纪实广告风主体..."
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

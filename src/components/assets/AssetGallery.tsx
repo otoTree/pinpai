@@ -61,7 +61,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
   const getAssetsByType = (type: AssetType) => assets?.filter((a) => a.type === type) || [];
 
   const typeMap: Record<string, string> = {
-    character: '角色',
+    character: '主体',
     location: '场景',
   };
 
@@ -115,7 +115,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
     }
     
     // Double confirm for safety
-    if (!confirm('请再次确认：这将删除当前项目下的所有角色、场景和道具。')) {
+    if (!confirm('请再次确认：这将删除当前项目下的所有主体、场景和道具。')) {
         return;
     }
 
@@ -370,7 +370,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
       <div className="flex justify-between items-center mb-8">
         <div>
             <h1 className="text-3xl font-serif font-bold mb-2">设定集</h1>
-            <p className="text-black/60 mb-3">管理您的角色和场景。</p>
+            <p className="text-black/60 mb-3">管理您的主体和场景。</p>
             <div className="flex gap-4 text-sm text-black/50 bg-black/[0.03] px-3 py-1.5 rounded-md w-fit">
                 <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {characterCount}</span>
                 <span className="w-px h-3 bg-black/10"></span>
@@ -419,7 +419,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AssetType)} className="w-full">
         <TabsList className="mb-8">
-          <TabsTrigger value="character" className="px-8">角色</TabsTrigger>
+          <TabsTrigger value="character" className="px-8">主体</TabsTrigger>
           <TabsTrigger value="location" className="px-8">场景</TabsTrigger>
         </TabsList>
 
@@ -489,7 +489,7 @@ export function AssetGallery({ projectId }: { projectId: string }) {
                                     <span className="truncate">{asset.name}</span>
                                     {asset.type === 'character' && asset.isMain && (
                                         <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500 text-white">
-                                            核心主角
+                                            核心主体
                                         </span>
                                     )}
                                 </div>

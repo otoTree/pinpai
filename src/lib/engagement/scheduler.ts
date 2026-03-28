@@ -55,7 +55,7 @@ export async function engagementScheduler(params: ScheduleParams): Promise<Sched
     warnings.push('压抑指数过高,必须释放爽点');
   }
   if (currentSI < 0.3 && !availablePayoffs.length) {
-    warnings.push('压抑不足,需要增加对主角的打压或悬念');
+    warnings.push('压抑不足,需要增加对主体的打压或悬念');
   }
 
   return {

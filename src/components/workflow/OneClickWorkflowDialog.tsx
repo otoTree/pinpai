@@ -86,7 +86,7 @@ export function OneClickWorkflowDialog({ projectId, open, onOpenChange }: OneCli
               summary: ep.summary || '',
               hook: ep.hook || '',
               cliffhanger: ep.cliffhanger || '',
-              duration_seconds: ep.duration_seconds || 60,
+              duration_seconds: ep.duration_seconds || 90,
             },
             lastEdited: Date.now(),
           }));
@@ -502,7 +502,7 @@ export function OneClickWorkflowDialog({ projectId, open, onOpenChange }: OneCli
             一键全流程生成
           </DialogTitle>
           <DialogDescription className="font-light text-black/60">
-            该功能将依次执行：1. 生成项目大纲；2. 生成缺失剧本；3. 为角色/场景生成配图；4. 生成分镜脚本；5. 生成分镜视频(需确认)。
+            该功能将依次执行：1. 生成项目大纲；2. 生成缺失剧本；3. 为主体/场景生成配图；4. 生成分镜脚本；5. 生成分镜视频(需确认)。
             这可能需要较长的时间，请耐心等待。
           </DialogDescription>
         </DialogHeader>

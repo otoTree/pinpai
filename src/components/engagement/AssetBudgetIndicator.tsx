@@ -99,10 +99,10 @@ export function AssetBudgetIndicator({ episode, assets, onAssetClick }: AssetBud
         <div>
           <span className="text-sm font-medium">使用的资产</span>
           <div className="mt-2 space-y-3">
-            {/* 角色 */}
+            {/* 主体 */}
             {assetsByType.character.length > 0 && (
               <div>
-                <div className="text-xs text-muted-foreground mb-1">角色</div>
+                <div className="text-xs text-muted-foreground mb-1">主体</div>
                 <div className="flex flex-wrap gap-2">
                   {assetsByType.character.map(asset => (
                     <Badge

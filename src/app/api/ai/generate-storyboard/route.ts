@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert film director and storyboard artist specializing in visual storytelling.',
+          content: 'You are an expert film director and storyboard artist specializing in branded short dramas, one-episode-one-story pacing, and high-retention visual storytelling.',
         },
         { role: 'user', content: prompt },
       ],

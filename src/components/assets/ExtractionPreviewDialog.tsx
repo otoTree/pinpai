@@ -120,7 +120,7 @@ export function ExtractionPreviewDialog({
   };
 
   const typeMap: Record<string, string> = {
-    character: '角色',
+    character: '主体',
     location: '场景',
   };
 
@@ -176,7 +176,7 @@ export function ExtractionPreviewDialog({
                                     {asset.name}
                                     {asset.isMain && (
                                         <span className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-1.5 py-0.5 rounded">
-                                            核心主角
+                                            核心主体
                                         </span>
                                     )}
                                 </label>

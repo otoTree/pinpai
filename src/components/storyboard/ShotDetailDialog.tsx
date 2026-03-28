@@ -150,7 +150,7 @@ export function ShotDetailDialog({ open, onOpenChange, shot, assets, onSave }: S
                     value={data.description} 
                     onChange={e => setData({ ...data, description: e.target.value })}
                     className="text-sm leading-relaxed min-h-[250px] bg-white border-yellow-100 focus:border-yellow-300 focus:ring-yellow-100 shadow-sm p-6"
-                    placeholder="画面构图：极近特写，极浅景深配合荷兰角倾斜机位。[角色名: 年龄，状态，穿着...] 占据画面主体... 人物空间与互动关系... 明确的场景环境元素... 光影几何与大气效果... 视觉风格/胶片质感... 技术参数..."
+                    placeholder="画面构图：极近特写，极浅景深配合荷兰角倾斜机位。[主体名: 年龄，状态，穿着...] 占据画面主体... 人物空间与互动关系... 明确的场景环境元素... 光影几何与大气效果... 视觉风格/胶片质感... 技术参数..."
                   />
                 </div>
 
@@ -165,7 +165,7 @@ export function ShotDetailDialog({ open, onOpenChange, shot, assets, onSave }: S
                       value={data.dialogue || ''} 
                       onChange={e => setData({ ...data, dialogue: e.target.value })}
                       className="min-h-[100px] bg-white border-blue-100 focus:border-blue-300 focus:ring-blue-100 shadow-sm"
-                      placeholder="角色名: 对白内容"
+                      placeholder="主体名: 对白内容"
                     />
                   </div>
 
@@ -204,7 +204,7 @@ export function ShotDetailDialog({ open, onOpenChange, shot, assets, onSave }: S
                       <Input value={data.sceneLabel || ''} onChange={e => setData({ ...data, sceneLabel: e.target.value })} placeholder="e.g. 城市废墟" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs text-gray-500 font-bold">角色动作 (Character Action)</Label>
+                      <Label className="text-xs text-gray-500 font-bold">主体动作 (Subject Action)</Label>
                       <Input value={data.characterAction || ''} onChange={e => setData({ ...data, characterAction: e.target.value })} placeholder="e.g. 极度恐慌、抱紧孩子" />
                     </div>
                     <div className="space-y-2">
@@ -242,7 +242,7 @@ export function ShotDetailDialog({ open, onOpenChange, shot, assets, onSave }: S
 
                   {data.characters && data.characters.length > 0 && (
                     <div className="space-y-3">
-                      <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">当前出场角色 ({data.characters.length}/3)</Label>
+                      <Label className="text-xs uppercase tracking-widest text-gray-500 font-bold">当前出场主体 ({data.characters.length}/3)</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {data.characters.map((char, idx) => (
                           <div key={idx} className="p-4 border border-gray-100 rounded-lg bg-white shadow-sm space-y-2">
@@ -359,7 +359,7 @@ function AssetItem({ asset, selected, onClick }: { asset: Asset, selected: boole
         <div className="text-sm font-medium truncate text-gray-900">{asset.name}</div>
         <div className="text-[10px] text-gray-500 uppercase flex items-center gap-2 mt-0.5">
           <Badge variant="secondary" className="text-[10px] h-4 px-1 rounded-sm font-normal text-gray-500 bg-gray-100">
-            {asset.type === 'character' ? '角色' : asset.type === 'location' ? '场景' : asset.type}
+            {asset.type === 'character' ? '主体' : asset.type === 'location' ? '场景' : asset.type}
           </Badge>
         </div>
       </div>

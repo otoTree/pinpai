@@ -491,7 +491,7 @@ ${current.videoPrompt || 'None'}
             {/* 工业化分镜信息速览区 (Industrial Info) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-gray-100">
               <div className="space-y-1">
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">角色动作</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">主体动作</div>
                 {isEditing ? (
                   <Textarea 
                     value={current.characterAction || ''} 
@@ -628,7 +628,7 @@ ${current.videoPrompt || 'None'}
                     value={current.videoPrompt || ''} 
                     onChange={(e: any) => setDraft({ ...current, videoPrompt: e.target.value })}
                     className="text-[11px] font-mono min-h-[80px]"
-                    placeholder="Describe camera movement, character actions, and physical dynamics for video generation..."
+                    placeholder="Describe camera movement, subject actions, and physical dynamics for video generation..."
                   />
                 ) : (
                   <p className="text-[11px] text-gray-500 font-mono leading-relaxed bg-gray-50 p-2 rounded line-clamp-3 hover:line-clamp-none transition-all">
@@ -648,7 +648,7 @@ ${current.videoPrompt || 'None'}
                   value={current.dialogue || ''} 
                   onChange={(e: any) => setDraft({ ...current, dialogue: e.target.value })}
                   className="text-sm min-h-[60px]"
-                  placeholder="角色名: 对白内容..."
+                  placeholder="主体名: 对白内容..."
                 />
               ) : (
                 <p className="text-sm text-gray-800 leading-relaxed font-medium">
@@ -765,7 +765,7 @@ ${current.videoPrompt || 'None'}
                             <div className="overflow-hidden">
                               <div className="font-medium text-sm truncate">{asset.name}</div>
                               <div className="text-[10px] text-gray-500 uppercase">
-                                {asset.type === 'character' ? '角色' : asset.type === 'location' ? '场景' : asset.type}
+                                {asset.type === 'character' ? '主体' : asset.type === 'location' ? '场景' : asset.type}
                               </div>
                             </div>
                           </div>
@@ -793,7 +793,7 @@ ${current.videoPrompt || 'None'}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{asset.name}</div>
                       <div className="text-[10px] text-gray-400 uppercase">
-                        {asset.type === 'character' ? '角色' : asset.type === 'location' ? '场景' : asset.type}
+                        {asset.type === 'character' ? '主体' : asset.type === 'location' ? '场景' : asset.type}
                       </div>
                     </div>
                     <button onClick={() => toggleAsset(id)} className="exclude-from-export text-gray-300 hover:text-red-400">

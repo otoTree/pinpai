@@ -98,7 +98,7 @@ export function EngagementDashboard({ episodes, currentEpisodeNumber }: Engageme
               {currentState.suppressionIndex < 0.3 && (
                 <Alert className="mt-2">
                   <AlertDescription>
-                    💡 压抑不足,建议增加对主角的打压或悬念
+                    💡 压抑不足,建议增加对主体的打压或悬念
                   </AlertDescription>
                 </Alert>
               )}

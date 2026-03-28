@@ -24,22 +24,25 @@ Output Format: JSON
 
 export const getSystemPrompt = (language: string = 'zh') => {
   const isEnglish = language === 'en';
-  return `You are an expert AI scriptwriter specializing in adapting stories into 10-episode mini-series for TikTok/Reels.
-Your core competency is transforming existing stories into high-retention short video scripts (90-120s per episode) while preserving the original core conflict and character motivations.
+  return `You are an expert AI scriptwriter specializing in branded short dramas for TikTok/Reels.
+Your core competency is transforming brand themes, product value, and existing story material into high-retention short video scripts with exactly one complete story per episode (90-120s per episode), while preserving emotional credibility and making the brand/message feel naturally embedded.
 
 Key Principles:
 1. **TikTok Logic**:
    - First 3s: Immediate Hook/Visual Shock (Abnormal information).
    - Every 10-15s: New Information or Reversal.
    - At least 2 major conflicts/suspense points per episode.
-   - End: Strong Cliffhanger (Unfinished state).
-2. **No Plagiarism**: Rewrite scenes completely, do not copy verbatim.
-3. **Format**: Focus on Plot, Action, and Dialogue. Avoid purely literary descriptions or long internal monologues.
-4. **Language Requirement**: Scripts must be generated in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
-5. **Aesthetic & Localization**:
-   - **Characters**: Use names and mannerisms appropriate for the target language/culture.
+   - By the end of the episode, the audience must receive a complete payoff, not an unfinished fragment.
+2. **Brand Integration**: The brand/product/value point must be integrated into the conflict, turning point, or resolution naturally. Avoid hard-sell copy, slogans pasted into dialogue, or detached advertising language.
+3. **One Episode, One Story**: Every episode must have a clear beginning, escalation, reversal, and resolution. It must be understandable as a standalone episode even if it belongs to a larger project.
+4. **No Plagiarism**: Rewrite scenes completely, do not copy verbatim.
+5. **Format**: Focus on Plot, Action, and Dialogue. Avoid purely literary descriptions or long internal monologues.
+6. **Language Requirement**: Scripts must be generated in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
+7. **Aesthetic & Localization**:
+   - **Subjects**: Use names and mannerisms appropriate for the target language/culture.
    - **Setting**: Set the story in a context appropriate for the target language/culture.
    - **Style**: Dialogue and visuals should align with film/TikTok trends in the target region.
+   - If the output language is Chinese, use “主体” instead of “角色” when referring to generic on-screen people/entities in instructions or descriptions.
 `;
 };
 
@@ -47,26 +50,28 @@ export const getProjectBlueprintPrompt = (theme: string, language: string = 'zh'
   const isEnglish = language === 'en';
   const safeEpisodeCount = Math.max(10, Math.min(120, Math.floor(episodeCount || 10)));
   return `
-Task: Create a consistent long-form short drama project blueprint based on the user's theme.
+Task: Create a consistent branded short drama project blueprint based on the user's theme.
 Theme: ${theme}
 Target episode count: ${safeEpisodeCount}
 
 Requirements:
-1. **Aesthetic**: The story MUST use character names and settings appropriate for the language: ${language}.
+1. **Aesthetic & Brand Fit**: The story world MUST feel suitable for branded short drama storytelling, with natural room for product, service, or brand value to appear inside the episode conflicts or resolutions.
 2. **Language**: The output MUST be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
 3. **Structure Methodology**:
+   - Every episode must be designed as a self-contained 90+ second story with a complete mini-arc.
+   - Episodes may share the same world, recurring主体, and tone, but should not require cross-episode dependency to be understandable.
    - Use a three-stage structure:
      - Stage 1 (Episodes 1-10): Establishment
      - Stage 2 (Episodes 11-30): Expansion
      - Stage 3 (Episodes 31-${safeEpisodeCount}): Endgame
 4. **Asset Pack**:
-   - Include at least 6 characters and 8 locations.
+   - Include at least 6 subject assets and 8 locations.
    - Each asset must include concise description and a visualPrompt in English for image generation.
-   - **For characters, explicitly identify up to 2 protagonists (main characters) and mark them with \`"isMain": true\`. All other supporting characters MUST have \`"isMain": false\`.**
+   - **For subject assets stored in \`characters\`, explicitly identify up to 2 core subjects and mark them with \`"isMain": true\`. All other supporting subjects MUST have \`"isMain": false\`.**
 5. **Output Scope**:
    - Do NOT output any episode list in this step.
    - Only output project_blueprint, story_analysis, and assets.
-6. **Quality**: High-stakes, serialized retention-first pacing with clear escalation.
+6. **Quality**: High-retention branded storytelling with clear escalation, emotional payoff, and natural commercial relevance.
 
 Output Format: JSON
 {
@@ -107,7 +112,7 @@ export const getStoryBatchPrompt = (
   const safeStart = Math.max(1, Math.floor(startEpisode || 1));
   const safeEnd = Math.min(safeEpisodeCount, Math.max(safeStart, Math.floor(endEpisode || safeStart)));
   return `
-Task: Generate episode outlines in a batch range for a long-form short drama.
+Task: Generate episode outlines in a batch range for a branded short drama series.
 
 Theme: ${theme}
 Language: ${language}
@@ -126,16 +131,21 @@ ${JSON.stringify(existingEpisodes)}
 Requirements:
 1. **Language**: All fields must be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
 2. **Scope**: Output only episodes from ${safeStart} to ${safeEnd}, no extra episodes.
-3. **Consistency**: Keep names, setting rules, relationship arcs, and stakes aligned with the blueprint.
+3. **Consistency**: Keep subject names, setting rules, brand tone, relationship arcs, and stakes aligned with the blueprint.
 4. **Per-episode fields**:
    - episode_number
    - title
    - summary
    - hook
    - cliffhanger
-   - duration_seconds (must be >= 60)
-5. **Retention**: Each episode must contain at least one clear hook and one clear end cliffhanger.
-6. **Escalation**: Stakes should escalate and align with long-arc progression.
+   - duration_seconds (must be >= 90)
+5. **One Episode, One Story**:
+   - Every episode MUST tell one self-contained brand short drama story with setup, conflict, reversal, and resolution.
+   - The audience MUST be able to understand the episode without depending on previous episodes.
+   - The brand/product/value point must be naturally embedded in the situation, not pasted in as ad copy.
+6. **Retention**: Each episode must contain at least one clear hook and one memorable ending beat.
+7. **Ending Rule**: The \`cliffhanger\` field should create emotional aftertaste, curiosity, or a forward-looking hook, but the episode's main story itself must already be complete.
+8. **Escalation**: Stakes should escalate across the project while keeping each episode independently satisfying.
 
 Output Format: JSON
 {
@@ -146,7 +156,7 @@ Output Format: JSON
       "summary": "...",
       "hook": "...",
       "cliffhanger": "...",
-      "duration_seconds": 60
+      "duration_seconds": 90
     }
   ]
 }
@@ -183,19 +193,21 @@ export const getEpisodeContentPrompt = (
   const allowedCharacters = normalizedAssets.filter((asset) => asset.type === 'character');
   const allowedLocations = normalizedAssets.filter((asset) => asset.type === 'location');
   return `
-Task: Write the detailed script for **Episode ${episodeNum}**.
+Task: Write the detailed script for **Episode ${episodeNum}** as a branded short drama episode.
 Context:
 - Series Plan: ${JSON.stringify(seriesPlan)}
 - Episode Summary: ${summary}
-- Allowed Characters: ${JSON.stringify(allowedCharacters)}
+- Allowed Subjects (stored as character assets): ${JSON.stringify(allowedCharacters)}
 - Allowed Locations: ${JSON.stringify(allowedLocations)}
 
 Requirements:
-1. **Aesthetic**: Ensure dialogue is natural for native speakers of ${language}.
-2. **Structure Consistency (HARD CONSTRAINT)**: script_content MUST use time-slice structure only. Scene-based headers are forbidden.
-3. **Language**: The script content MUST be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
-4. **Content Quality (CRITICAL)**:
+1. **Aesthetic & Brand Fit**: Ensure dialogue is natural for native speakers of ${language}, and embed the brand/product/value point inside the story action, not as detached advertising copy.
+2. **One Episode, One Story (HARD CONSTRAINT)**: This episode MUST contain one complete self-contained story with setup, escalation, reversal, and resolution. The audience must finish the episode with a complete narrative payoff.
+3. **Structure Consistency (HARD CONSTRAINT)**: script_content MUST use time-slice structure only. Scene-based headers are forbidden.
+4. **Language**: The script content MUST be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
+5. **Content Quality (CRITICAL)**:
    - **Visual Storytelling**: Use "Show, Don't Tell". Describe actions, expressions, and camera angles.
+   - **Brand Short Drama Logic**: The episode must revolve around one concrete scenario/problem, one key turning point, and one clear resolution that naturally reveals the brand value or emotional takeaway.
    - **TikTok Pacing**:
      - **0-3s**: Visual hook / shocking moment.
      - **3-15s**: Immediate conflict expansion.
@@ -203,13 +215,16 @@ Requirements:
      - **30-45s**: Escalation and pressure increase.
      - **45-60s**: Decision/action with visible risk.
      - **60-75s**: Consequence and stronger confrontation.
-     - **75-90s**: Cliffhanger setup and unresolved ending.
-5. **Asset Consistency (HARD CONSTRAINT)**:
-   - Character names in the script MUST ONLY come from Allowed Characters.
+     - **75-90s**: Resolution landing, emotional payoff, and memorable ending hook.
+6. **Asset Consistency (HARD CONSTRAINT)**:
+   - Subject names in the script MUST ONLY come from Allowed Subjects.
    - Scene locations in the script MUST ONLY come from Allowed Locations.
-   - You are STRICTLY FORBIDDEN from inventing or introducing any new characters or locations not listed in the Allowed list.
+   - You are STRICTLY FORBIDDEN from inventing or introducing any new subjects or locations not listed in the Allowed list.
    - If the summary implies an unavailable role/location, adapt the plot using the closest allowed assets instead of inventing.
-6. **Output Template (MANDATORY)**:
+7. **Naming Rule**:
+   - If the output language is Chinese, use “主体” instead of “角色” when referring to generic people/entities in action descriptions.
+   - Dialogue speaker names and all asset references must still use the exact allowed asset names.
+8. **Output Template (MANDATORY)**:
    - script_content MUST be plain text.
    - script_content MUST contain exactly these 7 sections in this order:
      [0-3${isEnglish ? 's' : '秒'}]
@@ -221,7 +236,8 @@ Requirements:
      [75-90${isEnglish ? 's' : '秒'}]
    - Each section must include:
      - One location/action line in parentheses.
-     - 2-4 lines of dialogue/action beats.
+     - 3-5 lines of dialogue/action beats.
+   - The full script MUST clearly sustain at least 90 seconds of screen time. Do not compress the episode into a thin outline.
    - Do not use headers like "场景1/场景2", "开场3秒", "Scene 1/Scene 2", or any other custom structure.
 
 Output Format: JSON
@@ -331,13 +347,14 @@ export const getStoryboardGenerationPrompt = (scriptContent: string, existingAss
 3. **Language Requirement**: All content in the JSON output MUST be in ${isEnglish ? 'English' : 'the target language (' + language + ')'}.
 4. **Flexible Duration (4s-6s)**: Each shot should typically last between 4s to 6s. It must capture a specific action, reaction, or dialogue beat.
 5. **Mandatory Visual Continuity**: Shot transitions MUST have clear visual logic (e.g., eyeline match, action continuity, reaction shot). No illogical hard cuts.
-6. **Asset Coverage & Matching**: Each shot MUST list all involved **characters and locations**. If an asset exists in the provided list, use its exact name (case-insensitive match). **CRITICAL: EVERY single shot MUST have at least one explicit scene/location assigned to it in \`sceneLabel\` and \`suggestedAssets.locations\`. Even for close-ups or continuous action, you MUST explicitly state the scene/location. Never leave the scene empty.**
-7. **Opening Highlight Shot**: Shot \`sequence: 1\` MUST be the current episode's highlight moment: the single most emotionally explosive, visually striking, or plot-defining shot from this episode. It must function as a cold open teaser, not a generic establishing shot.
+6. **Asset Coverage & Matching**: Each shot MUST list all involved **subjects and locations**. If an asset exists in the provided list, use its exact name (case-insensitive match). **CRITICAL: EVERY single shot MUST have at least one explicit scene/location assigned to it in \`sceneLabel\` and \`suggestedAssets.locations\`. Even for close-ups or continuous action, you MUST explicitly state the scene/location. Never leave the scene empty.**
+7. **Opening Highlight Shot**: Shot \`sequence: 1\` MUST be the current episode's highlight moment: the single most emotionally explosive, visually striking, brand-relevant, or plot-defining shot from this episode. It must function as a cold open teaser, not a generic establishing shot.
+8. **One Episode, One Story**: The storyboard MUST clearly visualize one complete story arc within this episode: setup, problem, turning point, and resolution, all landing within 90+ seconds.
 
 ## 1. Visual & Aesthetic Layer
 **Definition**: The expression layer used to **enhance emotional and thematic impact**.
 - **Composition & Depth**: Specify framing (e.g., Extreme Close-Up, Dutch Angle) and depth of field.
-- **Character Detailing**: Include highly specific character descriptions within brackets \`[Name: Age, traits, clothing, muscle tension, micro-expressions]\`.
+- **Subject Detailing**: Include highly specific subject descriptions within brackets \`[主体名/Name: Age, traits, clothing, muscle tension, micro-expressions]\`.
 - **Spatial Relations**: Define foreground, midground, and background clearly. Describe exactly what is blocking or passing through the frame.
 - **Lighting & Atmosphere**: Specify lighting geometry (e.g., high contrast hard light, side backlighting) and color contrast.
 - **Cinematic Texture**: Specify film stock feel, grain, and aesthetic (e.g., Kodak 500T, high grain, dirty aesthetic).
@@ -363,10 +380,12 @@ When generating the \`videoPrompt\`, assume the AI video model has zero context.
 Analyze the provided script and generate a storyboard sequence.
 **IMPORTANT**: 
 1. **Detail Level**: You MUST generate extremely detailed descriptions and Video Prompts as specified above. Do not summarize or be concise. The more granular detail about lighting, physics, and camera movement, the better.
-2. **Shot Breakdown Strategy**: You MUST generate AT LEAST 15 shots. There is NO limit on the maximum number of shots. Break down actions and dialogue into as many short shots (4-6s each) as necessary to perfectly capture the pacing. Do not over-compress. Ensure the total episode duration (across all chunks) exceeds 70 seconds.
+2. **Shot Breakdown Strategy**: You MUST generate AT LEAST 18 shots. There is NO limit on the maximum number of shots. Break down actions and dialogue into as many short shots (4-6s each) as necessary to perfectly capture the pacing. Do not over-compress. Ensure the total episode duration (across all chunks) reaches at least 90 seconds, preferably 90-110 seconds.
 3. **Mandatory Scene Requirement**: EVERY shot MUST have a non-empty \`sceneLabel\` and at least one item in \`suggestedAssets.locations\`. Do not leave the scene blank under any circumstances, even if it is a continuation of the previous shot.
 4. **First Shot Priority**: The very first shot must be the episode highlight shot with the highest dramatic value, strongest emotion, or biggest suspense payoff in the current script. Start with impact. Only after that may you unfold the rest of the episode beats.
 5. **Temporal Clarity After Teaser**: If shot 1 is a cold open from a later peak moment, shot 2 or the following shots MUST clearly signal the rewind or time shift in \`transition.timeGap\` and \`timeline\` so the sequence still reads coherently.
+6. **Brand Short Drama Arc**: The shot sequence MUST make the brand-related scenario, problem escalation, key turning point, and final resolution visually legible without requiring external explanation.
+7. **Chinese Naming Rule**: If the output language is Chinese and you need a generic label for a person/entity in descriptions, use “主体” instead of “角色”.
 
 **Script Content**:
 ${scriptContent.slice(0, 15000)}...
@@ -381,7 +400,7 @@ ${JSON.stringify(existingAssets.map(a => ({ id: a.id, name: a.name, type: a.type
   "shots": [
     {
       "sequence": 1,
-      "description": "EXTREMELY DETAILED visual description. Include composition (e.g. Extreme Close-Up, Dutch angle), character details [Name: traits, clothing, micro-expressions], spatial relations, lighting geometry, and cinematic texture (e.g. Kodak 500T).",
+      "description": "EXTREMELY DETAILED visual description. Include composition (e.g. Extreme Close-Up, Dutch angle), subject details [主体名/Name: traits, clothing, micro-expressions], spatial relations, lighting geometry, and cinematic texture (e.g. Kodak 500T).",
       "sceneLabel": "Scene location tag (e.g. City Ruins, Supermarket)",
       
       "transition": {
@@ -401,20 +420,20 @@ ${JSON.stringify(existingAssets.map(a => ({ id: a.id, name: a.name, type: a.type
       "emotion": "Dominant emotion (e.g. Panic, Despair)",
       "lightingAtmosphere": "Lighting and atmosphere (e.g. High contrast hard light, Dim orange firelight)",
       "soundEffect": "Key sound effects (e.g. Heavy footsteps, Distant sirens)",
-      "dialogue": "Character Name: Content (or Voiceover: Content)",
+      "dialogue": "主体名称/Name: Content (or Voiceover: Content)",
       "camera": "Close-up / Pan Right / ...",
       "size": "Medium Shot / Close-up / Long Shot",
       "duration": 5, // Estimated duration in seconds (4-6s flexible)
       "videoPrompt": "Detailed English prompt for video generation. MUST emphasize cinematic realism, photorealistic textures, and professional cinematography. Strictly avoid 3D, game CG, or anime styles. MUST include camera movement (e.g. 'Explosive fast push-in'), physical dynamics (muscle contraction, fluid/particle physics), action impact, and environmental reactions. Be extremely specific.",
-      "suggestedAssetNames": ["Char Name", "Location Name"],
+      "suggestedAssetNames": ["主体名/Name", "Location Name"],
       "characters": [
         {
-          "name": "Character Name",
-          "description": "Character appearance and clothing description for this shot"
+          "name": "主体名/Name",
+          "description": "Subject appearance and clothing description for this shot"
         }
       ],
       "suggestedAssets": {
-        "characters": ["Character Name"],
+        "characters": ["主体名/Name"],
         "locations": ["Location Name"]
       }
     },
@@ -425,14 +444,14 @@ ${JSON.stringify(existingAssets.map(a => ({ id: a.id, name: a.name, type: a.type
 };
 
 export const getCoverDesignPrompt = (title: string, logline: string, characters: string[] = [], language: string = 'zh') => {
-  const charactersStr = characters.length > 0 ? characters.join(', ') : '无具体主角名称（请根据剧情推断）';
+  const charactersStr = characters.length > 0 ? characters.join(', ') : '无具体主体名称（请根据剧情推断）';
   return `
 你是专业的短剧封面设计专家。请严格遵循以下设计规则生成封面方案。
 
 短剧信息：
 剧名：${title}
 故事介绍：${logline}
-主角名称：${charactersStr}
+主体名称：${charactersStr}
 目标受众语言：${language}
 
 ## 短剧封面设计规则
@@ -475,7 +494,7 @@ export const getCoverDesignPrompt = (title: string, logline: string, characters:
 | 科幻 | hero_portrait | Geometric Sans | Metal | Blue+Silver | Cold Rim Light | futuristic |
 
 ### 5. Prompt 结构模板
-[固定竖版 3:4 画幅比例] [版式布局] [景别选择] [主角描述 (必须包含这里提供的主角名称)] [角色站位+姿态] [视线结构] [光影模式] [场景背景] [排版设计(必须明确包含生成的 Title 和 Slogan 的英文文本并要求渲染在画面上)] [整体氛围词]
+[固定竖版 3:4 画幅比例] [版式布局] [景别选择] [主体描述 (必须包含这里提供的主体名称)] [主体站位+姿态] [视线结构] [光影模式] [场景背景] [排版设计(必须明确包含生成的 Title 和 Slogan 的英文文本并要求渲染在画面上)] [整体氛围词]
 
 通用质量词：cinematic poster, ultra-detailed, 8K, professional photography, volumetric lighting, depth of field, photorealistic, real human actors
 
@@ -483,12 +502,12 @@ export const getCoverDesignPrompt = (title: string, logline: string, characters:
 1. 脸部面积 ≥ 画面 40%
 2. 双字体系统：Script手写体 + Serif/Sans衬线体叠加
 3. 字号层级：核心名词最大，形容词次之，介词最小
-4. 背景虚化，聚焦主角面部情绪
+4. 背景虚化，聚焦主体面部情绪
 5. **文字必须全部英文**：title 和 slogan 必须是英文（或者根据受众语言调整，但图片 Prompt 中描述的字必须是英文以适应生图模型）。
 6. **文字渲染（极度重要）**：image_prompt 和 episode_prompt 中**必须明确且完整地包含**你生成的 Title 和 Slogan 文本内容，并强烈指示模型将其作为文字印在海报上，例如："Large cinematic title text 'YOUR TITLE', smaller elegant slogan text 'YOUR SLOGAN' at the bottom"。如果没有生成 slogan，必须基于梗概生成一个并放入 prompt。
 7. **画面必须是真人摄影风格**：禁止漫画风、动漫风、游戏仿真人风
 8. **景别选择（重要）**：禁止使用近景全身。只能使用：远景全身(wide shot)、近景半身(medium close-up)、面部特写(close-up)。必须包含明确的情绪和表情描述。
-9. **角色一致性（极度重要）**：图片 Prompt 中的角色描述**必须且只能**基于提供的主角名称进行设定。绝对禁止引入或描述未在主角列表中出现的人物！如果是单人剧，画面只能有主角一人。
+9. **主体一致性（极度重要）**：图片 Prompt 中的主体描述**必须且只能**基于提供的主体名称进行设定。绝对禁止引入或描述未在主体列表中出现的人物！如果是单人剧，画面只能有主体一人。
 10. **封面比例固定**：封面统一为竖版 3:4。image_prompt 和 episode_prompt 都必须明确写出 portrait 3:4 / aspect ratio 3:4，禁止生成 9:16、1:1、16:9 或其他比例。
 
 请以 JSON 格式返回，包含以下字段：
