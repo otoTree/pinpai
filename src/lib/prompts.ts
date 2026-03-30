@@ -401,17 +401,22 @@ export const getStoryboardGenerationPrompt = (scriptContent: string, existingAss
 - **Composition & Depth**: Specify framing (e.g., Extreme Close-Up, Dutch Angle) and depth of field.
 - **Subject Detailing**: Include highly specific subject descriptions within brackets \`[主体名/Name: Age, traits, clothing, muscle tension, micro-expressions]\`.
 - **Spatial Relations**: Define foreground, midground, and background clearly. Describe exactly what is blocking or passing through the frame.
+- **Action Choreography**: Break movement into visible phases. Describe preparation pose, weight shift, limb trajectory, contact moment, follow-through, and end pose. Avoid vague verbs like “turns” or “runs” without body mechanics.
 - **Lighting & Atmosphere**: Specify lighting geometry (e.g., high contrast hard light, side backlighting) and color contrast.
+- **Sound Staging**: Sound descriptions must include source, distance, texture, rhythm, and whether the sound is on-screen, off-screen, subjective, or continuing from the previous shot.
+- **Lens & Motion Geography**: Define camera angle, lens feel, start frame, end frame, movement path, movement speed, and the trigger for movement.
 - **Cinematic Texture**: Specify film stock feel, grain, and aesthetic (e.g., Kodak 500T, high grain, dirty aesthetic).
 - **Detail Level**: EXTREMELY HIGH. Do not trust the video model to infer details. Provide granular visual information.
 
 ### 🎬 Video Generation Prompt Rules
 When generating the \`videoPrompt\`, assume the AI video model has zero context. You MUST include:
 1. **Cinematic Realism**: Emphasize photorealistic, cinematic lighting, highly detailed textures, and professional cinematography.
-2. **Camera Movement**: Start with specific, dynamic camera movements (e.g., "Explosive fast push-in", "Slow tracking shot").
-3. **Physical Dynamics**: Describe muscle contractions, physics of fluids/particles (e.g., "blood splashing in slow motion", "dust swirling from the wind").
-4. **Action Impact**: Describe the force and weight of the action.
-5. **Environmental Reaction**: How does the environment react to the action? (e.g., flickering firelight, shaking camera).
+2. **Camera Movement**: Start with specific, dynamic camera movement that includes angle, lens feel, movement path, speed, and how the framing changes from shot start to shot end.
+3. **Action Beats**: Describe the action step by step: preparation, initiation, main motion, contact/reaction, follow-through, and end state. Include muscle tension, body balance, gaze changes, and prop interaction.
+4. **Physical Dynamics**: Describe the physics of bodies, cloth, fluids, particles, smoke, dust, hair, reflections, or debris (e.g., "dust swirling from the wind", "sleeve fabric snapping as the arm whips forward").
+5. **Action Impact**: Describe the force, weight, acceleration, and emotional pressure of the action.
+6. **Environmental Reaction**: Explain how the environment reacts to the action or camera movement (e.g., flickering firelight, vibrating tabletop, swinging door, shaking handheld frame).
+7. **Sound Imagination**: Even though the output is visual-first, embed the implied rhythm of key sound cues so the shot feels editable for video production. Mention impacts, ambience, breath, fabric noise, machinery hum, or distant off-screen sound when relevant.
 
 ## 2. Continuity & Cohesion Layer (CRITICAL for Video Gen)
 **Definition**: Metadata fields that force the AI to maintain spatial and temporal logic between shots.
@@ -419,6 +424,7 @@ When generating the \`videoPrompt\`, assume the AI video model has zero context.
 - **Eyeline**: Define \`eyeline\` to establish the character's gaze vector, anchoring the 3D space.
 - **Action Arcs**: \`characterAction\` must be highly detailed, explicitly stating the **Start State** and **End State** of the movement.
 - **Environmental State**: Define \`environmentalState\` to track physical changes in the scene (e.g., broken glass, smoke).
+- **Audio Continuity**: \`soundEffect\` must explain whether the sound begins in this shot, continues from the previous shot, peaks mid-shot, or trails out into the next shot.
 - **Time & Motivation**: Use \`timeline\` for time anchors and \`cameraMotivation\` to explain *why* the camera moves.
 
 ## Task
@@ -432,6 +438,10 @@ Analyze the provided script and generate a storyboard sequence.
 6. **Brand Short Drama Arc**: The shot sequence MUST make the brand-related scenario, problem escalation, key turning point, and final resolution visually legible without requiring external explanation.
 7. **Product Subject Discovery Rule**: Do not wait for a dedicated product field. You must discover the product subject from the script and the existing subject library yourself. Whenever the script shows the product appearing, being held, used, delivered, compared, displayed, or emotionally highlighted, bind that shot to the matching subject asset name from the library.
 8. **Chinese Naming Rule**: If the output language is Chinese and you need a generic label for a person/entity in descriptions, use “主体” instead of “角色”.
+9. **Action Specificity Rule**: For every shot, avoid generic phrases such as “walking in”, “looks shocked”, “camera follows”. Replace them with observable choreography, body mechanics, and precise framing changes.
+10. **Sound Specificity Rule**: \`soundEffect\` cannot be a single noun phrase. It MUST specify source + texture + distance + rhythm/intensity + continuity state.
+11. **Camera Specificity Rule**: \`camera\` cannot be only “push”, “pan right”, or “handheld”. It MUST specify starting composition, movement path, speed, and ending composition.
+12. **Description Density Rule**: \`description\`, \`characterAction\`, \`soundEffect\`, \`camera\`, and \`videoPrompt\` must all be substantially detailed, production-usable text rather than short labels.
 
 **Script Content**:
 ${scriptContent.slice(0, 15000)}...
@@ -462,15 +472,15 @@ ${JSON.stringify(existingAssets.map(a => ({ id: a.id, name: a.name, type: a.type
       "environmentalState": "Physical state of the environment to maintain continuity",
       "generationConstraints": ["Rule 1 to prevent AI errors", "Rule 2"],
 
-      "characterAction": "Detailed action including Start State, End State, Muscle Tension, and Speed",
+      "characterAction": "Extremely detailed movement choreography including Start State, body posture, weight shift, limb path, hand interaction, gaze change, Muscle Tension, Speed, contact moment, environmental response, and End State",
       "emotion": "Dominant emotion (e.g. Panic, Despair)",
       "lightingAtmosphere": "Lighting and atmosphere (e.g. High contrast hard light, Dim orange firelight)",
-      "soundEffect": "Key sound effects (e.g. Heavy footsteps, Distant sirens)",
+      "soundEffect": "Detailed sound design including primary source, secondary ambience, distance, texture, rhythm, volume change, and relation to previous/next shot (e.g. Near heavy footsteps with rubber soles scraping wet concrete, distant siren smear in the background, the last metallic slam from previous shot ringing into the opening second)",
       "dialogue": "主体名称/Name: Content (or Voiceover: Content)",
-      "camera": "Close-up / Pan Right / ...",
+      "camera": "Detailed camera design including shot angle, lens feel, start framing, movement path, movement speed, whether handheld/steady, and end framing (e.g. Eye-level 50mm medium close-up starts locked on the subject's trembling hand, then executes a slow right-to-left lateral track with a subtle push-in, ending on an extreme close-up of the eyes)",
       "size": "Medium Shot / Close-up / Long Shot",
       "duration": 5, // Estimated duration in seconds (4-6s flexible)
-      "videoPrompt": "Detailed English prompt for video generation. MUST emphasize cinematic realism, photorealistic textures, and professional cinematography. Strictly avoid 3D, game CG, or anime styles. MUST include camera movement (e.g. 'Explosive fast push-in'), physical dynamics (muscle contraction, fluid/particle physics), action impact, and environmental reactions. Be extremely specific.",
+      "videoPrompt": "Detailed English prompt for video generation. MUST emphasize cinematic realism, photorealistic textures, and professional cinematography. Strictly avoid 3D, game CG, or anime styles. MUST begin with precise camera movement, then describe the action beat by beat, body mechanics, prop interaction, environmental reaction, and implied sound rhythm. Be extremely specific and production-usable.",
       "suggestedAssetNames": ["主体名/Name", "Location Name"],
       "characters": [
         {
