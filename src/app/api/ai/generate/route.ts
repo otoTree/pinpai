@@ -26,6 +26,15 @@ const parseJSONFromLLM = (content: string) => {
 };
 
 const normalizeAssetName = (value: string) => value.trim().toLowerCase();
+const toErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Internal Server Error';
+const parseErrorDetails = (details?: string) => {
+  if (!details) return null;
+  try {
+    return JSON.parse(details);
+  } catch {
+    return details;
+  }
+};
 
 const creativeGenerationTypes = new Set(['story_blueprint', 'story_batch']);
 
@@ -116,6 +125,7 @@ export async function POST(req: Request) {
     const targetLanguage = language || 'zh';
 
     let prompt = '';
+    let stage = type || 'unknown';
 
     if (type === 'story_blueprint') {
       prompt = getProjectBlueprintPrompt(theme, targetLanguage, episode_count, typeof product_asset_details === 'string' ? product_asset_details : '');
@@ -144,11 +154,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
-    const content = await generateJsonContent({
-      type,
-      targetLanguage,
-      prompt,
-    });
+    let content = '';
+    try {
+      content = await generateJsonContent({
+        type,
+        targetLanguage,
+        prompt,
+      });
+    } catch (error) {
+      if (error instanceof AIAPIError) {
+        return NextResponse.json(
+          {
+            error: error.message,
+            details: parseErrorDetails(error.details),
+            type,
+            stage,
+            upstreamStatus: error.status,
+          },
+          { status: error.status }
+        );
+      }
+      throw error;
+    }
 
     try {
       const jsonContent = parseJSONFromLLM(content);
@@ -194,15 +221,38 @@ export async function POST(req: Request) {
       }
       return NextResponse.json(jsonContent);
     } catch (e) {
+      stage = `${type}_response_parse`;
       console.error('JSON Parse Error:', e);
-      return NextResponse.json({ error: 'Invalid model JSON output', raw: content }, { status: 502 });
+      return NextResponse.json(
+        {
+          error: 'Invalid model JSON output',
+          details: toErrorMessage(e),
+          raw: content,
+          type,
+          stage,
+        },
+        { status: 502 }
+      );
     }
 
   } catch (error) {
     if (error instanceof AIAPIError) {
-      return NextResponse.json({ error: error.message, details: error.details }, { status: error.status });
+      return NextResponse.json(
+        {
+          error: error.message,
+          details: parseErrorDetails(error.details),
+          upstreamStatus: error.status,
+        },
+        { status: error.status }
+      );
     }
     console.error('API Route Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal Server Error',
+        details: toErrorMessage(error),
+      },
+      { status: 500 }
+    );
   }
 }

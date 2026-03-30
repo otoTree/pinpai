@@ -259,6 +259,31 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
     throw new Error('Empty script content');
   }, [project?.seriesPlan, project?.language, scriptAssets]);
 
+  const getErrorTextFromResponse = async (response: Response, fallback: string) => {
+    try {
+      const payload = await response.json();
+      const detailText =
+        typeof payload?.details === 'string'
+          ? payload.details
+          : payload?.details
+            ? JSON.stringify(payload.details, null, 2)
+            : '';
+      const parts = [
+        payload?.error,
+        payload?.stage ? `stage: ${payload.stage}` : '',
+        payload?.upstreamStatus ? `upstreamStatus: ${payload.upstreamStatus}` : '',
+        detailText,
+      ].filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+
+      if (parts.length > 0) {
+        return parts.join('\n');
+      }
+    } catch {
+    }
+
+    return `${fallback} (HTTP ${response.status})`;
+  };
+
   const handleGenerateSeries = async () => {
     if (!idea.trim()) return;
     const parsedEpisodeCount = Number.parseInt(episodeCount, 10);
@@ -283,7 +308,9 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
         }),
       });
       
-      if (!blueprintResponse.ok) throw new Error('Blueprint generation failed');
+      if (!blueprintResponse.ok) {
+        throw new Error(await getErrorTextFromResponse(blueprintResponse, 'Blueprint generation failed'));
+      }
       
       const blueprintData = await blueprintResponse.json();
       const assets = (blueprintData.assets || {}) as BlueprintAssets;
@@ -315,7 +342,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
           }),
         });
         if (!batchResponse.ok) {
-          throw new Error(`Batch generation failed (${start}-${end})`);
+          throw new Error(await getErrorTextFromResponse(batchResponse, `Batch generation failed (${start}-${end})`));
         }
         const batchData = await batchResponse.json();
         const batchOutline = Array.isArray(batchData.series_outline) ? batchData.series_outline as SeriesOutlineItem[] : [];
@@ -445,7 +472,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
       
     } catch (error) {
       console.error(error);
-      alert("生成剧集失败，请检查您的 API Key。");
+      alert(error instanceof Error ? error.message : "生成剧集失败。");
     } finally {
       setIsGenerating(false);
       setGenerationStage('idle');
