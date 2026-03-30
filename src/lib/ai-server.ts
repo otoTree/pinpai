@@ -85,7 +85,6 @@ const buildAIAPIConfig = ({
   timeoutValues,
   maxConcurrencyValues,
   minIntervalValues,
-  defaultMaxConcurrency = 50,
 }: {
   baseUrlValues: Array<string | undefined>;
   apiKeyValues: Array<string | undefined>;
@@ -93,16 +92,12 @@ const buildAIAPIConfig = ({
   timeoutValues: Array<string | undefined>;
   maxConcurrencyValues: Array<string | undefined>;
   minIntervalValues: Array<string | undefined>;
-  defaultMaxConcurrency?: number;
 }) => {
   const baseUrl = (getFirstDefinedEnv(...baseUrlValues) || 'https://api.openai.com/v1').replace(/\/+$/, '');
   const apiKey = getFirstDefinedEnv(...apiKeyValues);
   const model = getFirstDefinedEnv(...modelValues) || 'gpt-4o';
   const timeoutMs = toTimeoutMs(getNumberFromEnv(getFirstDefinedEnv(...timeoutValues), 300));
-  const maxConcurrency = Math.max(
-    1,
-    Math.min(50, Math.round(getNumberFromEnv(getFirstDefinedEnv(...maxConcurrencyValues), defaultMaxConcurrency)))
-  );
+  const maxConcurrency = Math.max(1, Math.min(50, Math.round(getNumberFromEnv(getFirstDefinedEnv(...maxConcurrencyValues), 50))));
   const minIntervalMs = Math.max(0, getNumberFromEnv(getFirstDefinedEnv(...minIntervalValues), 0));
 
   if (!baseUrl || !apiKey || !model) {
@@ -153,7 +148,6 @@ export const getAILLMAPIConfig = () => {
       process.env.AI_TEXT_API_MIN_INTERVAL_MS,
       process.env.AI_API_MIN_INTERVAL_MS,
     ],
-    defaultMaxConcurrency: 1,
   });
 
   llmConfigCache.value = config;

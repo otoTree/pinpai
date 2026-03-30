@@ -27,6 +27,67 @@ const parseJSONFromLLM = (content: string) => {
 
 const normalizeAssetName = (value: string) => value.trim().toLowerCase();
 
+const creativeGenerationTypes = new Set(['story_blueprint', 'story_batch']);
+
+const buildJsonOnlyPrompt = (prompt: string) => `${prompt}
+
+Critical Output Rule:
+- Return exactly one valid JSON object.
+- Do not use markdown code fences.
+- Do not add explanations before or after the JSON.
+- Ensure all required fields from the schema are present.`;
+
+const generateJsonContent = async ({
+  type,
+  targetLanguage,
+  prompt,
+}: {
+  type: string;
+  targetLanguage: string;
+  prompt: string;
+}) => {
+  const isCreativeGeneration = creativeGenerationTypes.has(type);
+  const maxTokens =
+    type === 'story_blueprint'
+      ? 3200
+      : type === 'story_batch'
+        ? 2600
+        : type === 'episode'
+          ? 4000
+          : undefined;
+
+  const runCompletion = async (mode: 'structured' | 'plain') => {
+    const data = await callAIChatCompletion({
+      messages: [
+        { role: 'system', content: getSystemPrompt(targetLanguage) },
+        {
+          role: 'user',
+          content: mode === 'plain' ? buildJsonOnlyPrompt(prompt) : prompt,
+        },
+      ],
+      temperature: isCreativeGeneration ? 0.6 : 0.7,
+      maxTokens,
+      extraPayload: mode === 'structured' ? { response_format: { type: 'json_object' } } : undefined,
+    });
+
+    return extractFirstMessageContent(data);
+  };
+
+  if (isCreativeGeneration) {
+    try {
+      return await runCompletion('plain');
+    } catch (error) {
+      if (!(error instanceof AIAPIError) || error.status < 500) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      return await runCompletion('plain');
+    }
+  }
+
+  return await runCompletion('structured');
+};
+
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
@@ -55,7 +116,6 @@ export async function POST(req: Request) {
     const targetLanguage = language || 'zh';
 
     let prompt = '';
-    const jsonMode = true;
 
     if (type === 'story_blueprint') {
       prompt = getProjectBlueprintPrompt(theme, targetLanguage, episode_count, typeof product_asset_details === 'string' ? product_asset_details : '');
@@ -84,15 +144,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
-    const data = await callAIChatCompletion({
-      messages: [
-        { role: 'system', content: getSystemPrompt(targetLanguage) },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.7,
-      extraPayload: jsonMode ? { response_format: { type: 'json_object' } } : undefined,
+    const content = await generateJsonContent({
+      type,
+      targetLanguage,
+      prompt,
     });
-    const content = extractFirstMessageContent(data);
 
     try {
       const jsonContent = parseJSONFromLLM(content);
