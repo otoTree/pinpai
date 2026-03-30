@@ -289,7 +289,7 @@ export function ScriptEditor({ projectId }: { projectId: string }) {
     const parsedEpisodeCount = Number.parseInt(episodeCount, 10);
     const safeEpisodeCount = Number.isFinite(parsedEpisodeCount) ? Math.max(10, Math.min(120, parsedEpisodeCount)) : 52;
     const normalizedProductAssetDetails = productAssetDetails.trim();
-    const batchSize = 8;
+    const batchSize = 4;
     const computedTotalBatches = Math.ceil(safeEpisodeCount / batchSize);
     setIsGenerating(true);
     setGenerationStage('blueprint');

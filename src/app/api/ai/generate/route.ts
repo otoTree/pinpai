@@ -46,21 +46,30 @@ Critical Output Rule:
 - Do not add explanations before or after the JSON.
 - Ensure all required fields from the schema are present.`;
 
+const buildRetryJsonPrompt = (prompt: string) => `${buildJsonOnlyPrompt(prompt)}
+- Keep every string concise.
+- Do not truncate the response.
+- Complete the entire JSON before stopping.`;
+
 const generateJsonContent = async ({
   type,
   targetLanguage,
   prompt,
+  attempt = 'primary',
 }: {
   type: string;
   targetLanguage: string;
   prompt: string;
+  attempt?: 'primary' | 'retry';
 }) => {
   const isCreativeGeneration = creativeGenerationTypes.has(type);
   const maxTokens =
     type === 'story_blueprint'
       ? 3200
       : type === 'story_batch'
-        ? 2600
+        ? attempt === 'retry'
+          ? 4200
+          : 3600
         : type === 'episode'
           ? 4000
           : undefined;
@@ -71,10 +80,14 @@ const generateJsonContent = async ({
         { role: 'system', content: getSystemPrompt(targetLanguage) },
         {
           role: 'user',
-          content: mode === 'plain' ? buildJsonOnlyPrompt(prompt) : prompt,
+          content: mode === 'plain'
+            ? (attempt === 'retry' ? buildRetryJsonPrompt(prompt) : buildJsonOnlyPrompt(prompt))
+            : prompt,
         },
       ],
-      temperature: isCreativeGeneration ? 0.6 : 0.7,
+      temperature: isCreativeGeneration
+        ? (attempt === 'retry' ? 0.4 : 0.6)
+        : 0.7,
       maxTokens,
       extraPayload: mode === 'structured' ? { response_format: { type: 'json_object' } } : undefined,
     });
@@ -221,6 +234,45 @@ export async function POST(req: Request) {
       }
       return NextResponse.json(jsonContent);
     } catch (e) {
+      if (creativeGenerationTypes.has(type)) {
+        let retryContent = '';
+        try {
+          retryContent = await generateJsonContent({
+            type,
+            targetLanguage,
+            prompt,
+            attempt: 'retry',
+          });
+          const retryJsonContent = parseJSONFromLLM(retryContent);
+          return NextResponse.json(retryJsonContent);
+        } catch (retryError) {
+          stage = `${type}_response_parse`;
+          console.error('JSON Parse Retry Error:', retryError);
+          if (retryError instanceof AIAPIError) {
+            return NextResponse.json(
+              {
+                error: retryError.message,
+                details: parseErrorDetails(retryError.details),
+                type,
+                stage: `${type}_retry`,
+                upstreamStatus: retryError.status,
+                raw: retryContent || content,
+              },
+              { status: retryError.status }
+            );
+          }
+          return NextResponse.json(
+            {
+              error: 'Invalid model JSON output',
+              details: toErrorMessage(retryError),
+              raw: retryContent || content,
+              type,
+              stage,
+            },
+            { status: 502 }
+          );
+        }
+      }
       stage = `${type}_response_parse`;
       console.error('JSON Parse Error:', e);
       return NextResponse.json(

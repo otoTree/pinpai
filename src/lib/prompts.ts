@@ -171,6 +171,11 @@ Requirements:
    - hook
    - cliffhanger
    - duration_seconds (must be >= 90)
+   - Keep each field concise and production-usable:
+     - \`title\`: short, punchy, avoid subtitles longer than needed
+     - \`summary\`: 2-4 sentences only
+     - \`hook\`: exactly 1 sentence
+     - \`cliffhanger\`: exactly 1 sentence
 5. **One Episode, One Story**:
    - Every episode MUST tell one self-contained brand short drama story with setup, conflict, reversal, and resolution.
    - The audience MUST be able to understand the episode without depending on previous episodes.
